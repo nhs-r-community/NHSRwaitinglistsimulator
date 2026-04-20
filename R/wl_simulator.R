@@ -11,8 +11,9 @@
 #' @param capacity numeric. Weekly capacity (i.e., typical removals per week).
 #' @param waiting_list data.frame. Waiting list where each row is a
 #' pathway/patient with date columns 'Referral' and 'Removal'.
-#' @param withdrawal_prob numeric. Probability of a patient withdrawing.
+#' @param withdrawal_prob numeric. Probability of a patient withdrawing (drop-out rate).
 #' @param detailed_sim logical. If TRUE, simulation provides detailed output.
+#' @param timebase character. Set the input timebase. The simulation will convert this to days, but if data are supplied at other aggregations, select the right one here. Options are: "day", "week","month", "quarter", "annual".
 #'
 #' @return A \code{data.frame} simulating a waiting list, with columns:\cr
 #'
@@ -61,13 +62,15 @@ wl_simulator <- function(
   demand = 10,
   capacity = 11,
   waiting_list = NULL,
-  withdrawal_prob = NA_real_,
-  detailed_sim = FALSE
+  timebase = "day",
+  withdrawal_prob = NA_real_
 ) {
 
   check_date(start_date, end_date, .allow_null = TRUE)
-  check_class(demand, capacity, withdrawal_prob, .expected_class = "numeric")
-  check_class(detailed_sim, .expected_class = "logical")
+  check_class(demand, capacity,withdrawal_prob, .expected_class = "numeric")
+  # Validate timebase input
+
+
   if (!is.null(waiting_list)) check_wl(waiting_list)
 
   # Fix Start and End Dates
@@ -75,59 +78,57 @@ wl_simulator <- function(
     start_date <- Sys.Date()
   }
   if (is.null(end_date)) {
-    end_date <- start_date + 31
+    end_date <- start_date + 28
   }
 
   start_date <- as.Date(start_date)
   end_date <- as.Date(end_date)
   number_of_days <- as.numeric(end_date) - as.numeric(start_date)
 
-  total_demand <- demand * number_of_days / 7
-  daily_capacity <- capacity / 7
+  # Time base
+  ####  Add a switch argument to select divisor.
+  time_adjustment <-
+    switch(timebase,
+         "day" = 1,
+         "week" = 7,
+         "month" = 28,
+         "quarter" = 92,
+         "annual" = 365,
+  )
+  ###
+  total_demand <- demand * number_of_days / time_adjustment
+  daily_demand <- total_demand / number_of_days
+  daily_capacity <- floor(capacity / time_adjustment) # is floor pessimistic here?
 
   # allowing for fluctuations in predicted demand give a arrival list
-  realized_demand <- stats::rpois(1, total_demand)
-  referral <-
-    sample(
-      seq(as.Date(start_date), as.Date(end_date), by = "day"),
-      realized_demand,
-      replace = TRUE
-    )
+  # Want to consider adding a daily sample
+  # Poisson sample according to daily demand
+  realized_demand <- stats::rpois(number_of_days+1,daily_demand)
+  referral <- rep(seq(as.Date(start_date), as.Date(end_date), by = "day") ,times =realized_demand)
 
   referral <- referral[order(referral)]
   removal <- rep(as.Date(NA), length(referral))
 
-  if (!detailed_sim) {
+
     if (is.na(withdrawal_prob)) {
       wl_simulated <- data.frame(
         "Referral" = referral,
         "Removal" = removal
       )
-    } else {
-      withdrawal <-
-        referral + rgeom(length(referral), prob = withdrawal_prob) + 1
-      withdrawal[withdrawal > end_date] <- NA
-      wl_simulated <- data.frame(
-        "Referral" = referral,
-        "Removal" = removal,
-        "Withdrawal" = withdrawal
-      )
-    }
+    } #else {
+      #withdrawal <-
+      #  referral + rgeom(length(referral), prob = withdrawal_prob) + 1
+      #withdrawal[withdrawal > end_date] <- NA
+      #wl_simulated <- data.frame(
+      #  "Referral" = referral,
+      #  "Removal" = removal,
+      #  "Withdrawal" = withdrawal
+      #)
+    #}
 
     if (!is.null(waiting_list)) {
       wl_simulated <- wl_join(waiting_list, wl_simulated)
     }
-  }
-  if (detailed_sim) {
-    if (is.na(withdrawal_prob)) {
-      withdrawal_prob <- 0.1
-    }
-    withdrawal <- referral + rgeom(length(referral), prob = withdrawal_prob) + 1
-    withdrawal[withdrawal > end_date] <- NA
-    wl_simulated <- sim_patients(length(referral), start_date)
-    wl_simulated$Referral <- referral
-    wl_simulated$Withdrawal <- withdrawal
-  }
 
   # create an operating schedule
   if (daily_capacity > 0) {
