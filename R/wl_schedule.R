@@ -49,7 +49,7 @@ wl_schedule <- function(
     schedule,
     referral_index = 1,
     removal_index = 2,
-    #unscheduled = FALSE
+    unscheduled = FALSE
 ) {
 
   # Error handle
