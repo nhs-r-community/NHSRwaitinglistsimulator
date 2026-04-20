@@ -6,9 +6,10 @@
 #' I.e. earlier referrals are scheduled first (FIFO).
 #'
 #' @param waiting_list data.frame. A df of referral dates and removals
-#' @param schedule Date or character vector. Should be formatted as
-#'   year-month-date, e.g. "2024-04-01".  The dates to schedule open referrals
-#'   into (i.e. dates of unbooked future capacity)
+#' @param schedule Data fram of two coumns. Column 1 is a Date or character vector.
+#'  Should be formatted as year-month-date, e.g. "2024-04-01".  Column 2 is a int vector
+#'  containing the scheduling index (day number post start date of removal for each referral).
+#'  The dates to schedule open referrals into (i.e. dates of unbooked future capacity)
 #' @param referral_index The column index in the waiting_list which contains the
 #'   referral dates
 #' @param removal_index The column index in the waiting_list which contains the
@@ -48,16 +49,16 @@ wl_schedule <- function(
     schedule,
     referral_index = 1,
     removal_index = 2,
-    unscheduled = FALSE
+    #unscheduled = FALSE
 ) {
 
   # Error handle
   check_wl(waiting_list, referral_index, removal_index)
-  check_date(schedule)
-  check_class(unscheduled, .expected_class = "logical")
+  check_date(schedule[,1])
+  #check_class(unscheduled, .expected_class = "logical")
 
-  if (!inherits(schedule, "Date")) {
-    schedule <- as.Date(schedule)
+  if (!inherits(schedule[,1], "Date")) {
+    schedule[,1] <- as.Date(schedule[,1])
   }
 
   # split waiters and removed
@@ -68,7 +69,7 @@ wl_schedule <- function(
   # schedule
   if (!unscheduled) {
     i <- 1
-    for (op in as.list(schedule)) {
+    for (op in as.list(schedule[,1])) {
       if (op > wl[i, referral_index] && i <= nrow(wl)) {
         wl[i, removal_index] <- op
         i <- i + 1

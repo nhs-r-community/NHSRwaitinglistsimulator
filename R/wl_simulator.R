@@ -66,11 +66,6 @@ wl_simulator <- function(
   withdrawal_prob = NA_real_
 ) {
 
-  check_date(start_date, end_date, .allow_null = TRUE)
-  check_class(demand, capacity,withdrawal_prob, .expected_class = "numeric")
-  # Validate timebase input
-
-
   if (!is.null(waiting_list)) check_wl(waiting_list)
 
   # Fix Start and End Dates
@@ -80,6 +75,10 @@ wl_simulator <- function(
   if (is.null(end_date)) {
     end_date <- start_date + 28
   }
+
+    check_date(start_date, end_date, .allow_null = TRUE)
+    check_class(demand, capacity,withdrawal_prob, .expected_class = "numeric")
+    # Validate timebase input
 
   start_date <- as.Date(start_date)
   end_date <- as.Date(end_date)
