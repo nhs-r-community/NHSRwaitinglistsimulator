@@ -65,8 +65,9 @@ wl_simulator <- function(
   timebase = "day",
   withdrawal_prob = NA_real_
 ) {
-
-  if (!is.null(waiting_list)) check_wl(waiting_list)
+  if (!is.null(waiting_list)) {
+    check_wl(waiting_list)
+  }
 
   # Fix Start and End Dates
   if (is.null(start_date)) {
@@ -76,9 +77,9 @@ wl_simulator <- function(
     end_date <- start_date + 28
   }
 
-    check_date(start_date, end_date, .allow_null = TRUE)
-    check_class(demand, capacity,withdrawal_prob, .expected_class = "numeric")
-    # Validate timebase input
+  check_date(start_date, end_date, .allow_null = TRUE)
+  check_class(demand, capacity, withdrawal_prob, .expected_class = "numeric")
+  # Validate timebase input
 
   start_date <- as.Date(start_date)
   end_date <- as.Date(end_date)
@@ -87,13 +88,14 @@ wl_simulator <- function(
   # Time base
   ####  Add a switch argument to select divisor.
   time_adjustment <-
-    switch(timebase,
-         "day" = 1,
-         "week" = 7,
-         "month" = 28,
-         "quarter" = 92,
-         "annual" = 365,
-  )
+    switch(
+      timebase,
+      "day" = 1,
+      "week" = 7,
+      "month" = 28,
+      "quarter" = 92,
+      "annual" = 365,
+    )
   ###
   total_demand <- demand * number_of_days / time_adjustment
   daily_demand <- total_demand / number_of_days
@@ -102,32 +104,34 @@ wl_simulator <- function(
   # allowing for fluctuations in predicted demand give a arrival list
   # Want to consider adding a daily sample
   # Poisson sample according to daily demand
-  realized_demand <- stats::rpois(number_of_days+1,daily_demand)
-  referral <- rep(seq(as.Date(start_date), as.Date(end_date), by = "day") ,times =realized_demand)
+  realized_demand <- stats::rpois(number_of_days + 1, daily_demand)
+  referral <- rep(
+    seq(as.Date(start_date), as.Date(end_date), by = "day"),
+    times = realized_demand
+  )
 
   referral <- referral[order(referral)]
   removal <- rep(as.Date(NA), length(referral))
 
+  if (is.na(withdrawal_prob)) {
+    wl_simulated <- data.frame(
+      "Referral" = referral,
+      "Removal" = removal
+    )
+  } #else {
+  #withdrawal <-
+  #  referral + rgeom(length(referral), prob = withdrawal_prob) + 1
+  #withdrawal[withdrawal > end_date] <- NA
+  #wl_simulated <- data.frame(
+  #  "Referral" = referral,
+  #  "Removal" = removal,
+  #  "Withdrawal" = withdrawal
+  #)
+  #}
 
-    if (is.na(withdrawal_prob)) {
-      wl_simulated <- data.frame(
-        "Referral" = referral,
-        "Removal" = removal
-      )
-    } #else {
-      #withdrawal <-
-      #  referral + rgeom(length(referral), prob = withdrawal_prob) + 1
-      #withdrawal[withdrawal > end_date] <- NA
-      #wl_simulated <- data.frame(
-      #  "Referral" = referral,
-      #  "Removal" = removal,
-      #  "Withdrawal" = withdrawal
-      #)
-    #}
-
-    if (!is.null(waiting_list)) {
-      wl_simulated <- wl_join(waiting_list, wl_simulated)
-    }
+  if (!is.null(waiting_list)) {
+    wl_simulated <- wl_join(waiting_list, wl_simulated)
+  }
 
   # create an operating schedule
   if (daily_capacity > 0) {

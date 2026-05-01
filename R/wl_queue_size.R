@@ -29,11 +29,13 @@
 #' removals <- c.Date("2024-01-08", NA, NA, NA)
 #' waiting_list <- data.frame("referral" = referrals, "removal" = removals)
 #' wl_queue_size(waiting_list)
-wl_queue_size <- function(waiting_list,
-                          start_date = NULL,
-                          end_date = NULL,
-                          referral_index = 1,
-                          removal_index = 2) {
+wl_queue_size <- function(
+  waiting_list,
+  start_date = NULL,
+  end_date = NULL,
+  referral_index = 1,
+  removal_index = 2
+) {
   check_wl(waiting_list, referral_index, removal_index)
   check_date(start_date, end_date, .allow_null = TRUE)
 
@@ -57,13 +59,23 @@ wl_queue_size <- function(waiting_list,
   queues$cummul_arrivals <- cumsum(queues[, 2])
 
   departures <-
-    wl[which((start_date <= wl[, removal_index]) &
-               (wl[, removal_index] <= end_date)), removal_index]
+    wl[
+      which(
+        (start_date <= wl[, removal_index]) &
+          (wl[, removal_index] <= end_date)
+      ),
+      removal_index
+    ]
   if (length(departures > 0)) {
     departure_counts <-
       data.frame(
-        table(wl[which((start_date <= wl[, removal_index]) &
-                         (wl[, removal_index] <= end_date)), removal_index])
+        table(wl[
+          which(
+            (start_date <= wl[, removal_index]) &
+              (wl[, removal_index] <= end_date)
+          ),
+          removal_index
+        ])
       )
 
     departure_counts[, 1] <- as.Date(departure_counts[, 1])
