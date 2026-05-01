@@ -68,12 +68,17 @@ wl_schedule <- function(
   # schedule
   if (!unscheduled) {
     i <- 1
-    for (op in as.list(schedule[, 1])) {
-      if (op > wl[i, referral_index] && i <= nrow(wl)) {
-        wl[i, removal_index] <- op
+    removals <- as.Date(character(nrow(wl)))
+    for (op in schedule[, 1]) {
+      if (i > nrow(wl)) {
+        break
+      }
+      if (op > wl[i, referral_index]) {
+        removals[[i]] <- op
         i <- i + 1
       }
     }
+    wl[, removal_index] <- removals
 
     # Ensure date format
     #wl$Removal <- as.Date(wl$Removal)
