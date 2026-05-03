@@ -45,20 +45,19 @@
 #' updated_waiting_list <- wl_schedule(waiting_list, schedule)
 #'
 wl_schedule <- function(
-    waiting_list,
-    schedule,
-    referral_index = 1,
-    removal_index = 2,
-    unscheduled = FALSE
+  waiting_list,
+  schedule,
+  referral_index = 1,
+  removal_index = 2,
+  unscheduled = FALSE
 ) {
-
   # Error handle
   check_wl(waiting_list, referral_index, removal_index)
-  check_date(schedule[,1])
+  check_date(schedule[, 1])
   #check_class(unscheduled, .expected_class = "logical")
 
-  if (!inherits(schedule[,1], "Date")) {
-    schedule[,1] <- as.Date(schedule[,1])
+  if (!inherits(schedule[, 1], "Date")) {
+    schedule[, 1] <- as.Date(schedule[, 1])
   }
 
   # split waiters and removed
@@ -69,12 +68,17 @@ wl_schedule <- function(
   # schedule
   if (!unscheduled) {
     i <- 1
-    for (op in as.list(schedule[,1])) {
-      if (op > wl[i, referral_index] && i <= nrow(wl)) {
-        wl[i, removal_index] <- op
+    removals <- rep(as.Date(NA), nrow(wl))
+    for (op in schedule[, 1]) {
+      if (i > nrow(wl)) {
+        break
+      }
+      if (op > wl[i, referral_index]) {
+        removals[[i]] <- op
         i <- i + 1
       }
     }
+    wl[, removal_index] <- removals
 
     # Ensure date format
     #wl$Removal <- as.Date(wl$Removal)
@@ -99,8 +103,6 @@ wl_schedule <- function(
         scheduled[j, 2] <- 1
       }
     }
-
-
 
     # Ensure date format
     #wl$Removal <- as.Date(wl$Removal)

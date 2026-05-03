@@ -6,19 +6,28 @@
 #'     called.
 #' @noRd
 check_class <- function(
-    ...,
-    .expected_class = "numeric",
-    .call = rlang::caller_env()) {
-
+  ...,
+  .expected_class = "numeric",
+  .call = rlang::caller_env()
+) {
   args <- rlang::dots_list(..., .named = TRUE)
 
   # expected types included NULL for argument defaults
-  supported_classes <- c("numeric", "character", "logical", "data.frame",
-                         "Date", "NULL", "integer")
+  supported_classes <- c(
+    "numeric",
+    "character",
+    "logical",
+    "data.frame",
+    "Date",
+    "NULL",
+    "integer"
+  )
 
-  .expected_class <- match.arg(.expected_class,
-                               supported_classes,
-                               several.ok = TRUE)
+  .expected_class <- match.arg(
+    .expected_class,
+    supported_classes,
+    several.ok = TRUE
+  )
 
   # inherits() is very useful for checking multiple classes at once
   # however since integers does not "inherit" the `numeric` class
@@ -27,8 +36,7 @@ check_class <- function(
     .expected_class <- c(.expected_class, "integer")
   }
 
-  args_are_class <- lapply(args,
-                           \(arg) inherits(arg, .expected_class))
+  args_are_class <- lapply(args, \(arg) inherits(arg, .expected_class))
 
   # clean up the integer workaround
   if ("numeric" %in% .expected_class) {
@@ -49,8 +57,11 @@ check_class <- function(
 
     fails_bullets <- stats::setNames(
       paste0(
-        "{.var ", names(fails_classes), "} with class {.cls ",
-        fails_classes, "}"
+        "{.var ",
+        names(fails_classes),
+        "} with class {.cls ",
+        fails_classes,
+        "}"
       ),
       rep("*", length(fails_classes))
     )
@@ -82,9 +93,7 @@ check_class <- function(
 #' @return Returns `NULL` invisibly if no errors
 #'
 #' @noRd
-check_date <- function(...,
-                       .call = rlang::caller_env(),
-                       .allow_null = FALSE) {
+check_date <- function(..., .call = rlang::caller_env(), .allow_null = FALSE) {
   args <- rlang::dots_list(..., .named = TRUE)
 
   date_classes <- c("Date", "character")
@@ -93,15 +102,16 @@ check_date <- function(...,
     date_classes <- c(date_classes, "NULL")
   }
 
-  rlang::exec(check_class,
-              !!!args,
-              .expected_class = date_classes,
-              .call = .call)
+  rlang::exec(
+    check_class,
+    !!!args,
+    .expected_class = date_classes,
+    .call = .call
+  )
 
   # attempt to coerce to date
   # NAs returned incorrect/ambiguous
-  coerced_dates <- lapply(args,
-                          \(arg) as.Date(arg, format = "%Y-%m-%d"))
+  coerced_dates <- lapply(args, \(arg) as.Date(arg, format = "%Y-%m-%d"))
 
   are_not_dates <- lapply(coerced_dates, \(x) any(is.na(x)))
   are_not_dates <- unlist(are_not_dates)
@@ -109,11 +119,10 @@ check_date <- function(...,
 
   if (length(fails_names) > 0) {
     cli::cli_abort(
-      message =
-        paste(
-          "{.var {fails_names}} must be in an unambiguous Date format",
-          "e.g., 'YYYY-MM-DD'"
-        ),
+      message = paste(
+        "{.var {fails_names}} must be in an unambiguous Date format",
+        "e.g., 'YYYY-MM-DD'"
+      ),
       call = .call
     )
   }
@@ -149,12 +158,12 @@ check_date <- function(...,
 #'
 #' @noRd
 check_wl <- function(
-    waiting_list,
-    ...,
-    .empty_wl = c("error", "warn", "allow"),
-    .allow_null = NULL,
-    .wl_name = rlang::caller_arg(waiting_list),
-    .call = rlang::caller_env()
+  waiting_list,
+  ...,
+  .empty_wl = c("error", "warn", "allow"),
+  .allow_null = NULL,
+  .wl_name = rlang::caller_arg(waiting_list),
+  .call = rlang::caller_env()
 ) {
   .empty_wl <- rlang::arg_match(.empty_wl)
 
@@ -213,8 +222,11 @@ check_wl <- function(
   if (sum(is_na_index) > 0) {
     fails_bullets <- stats::setNames(
       paste0(
-        "{.var ", names(na_indices), "} with value {.val ",
-        na_indices, "}"
+        "{.var ",
+        names(na_indices),
+        "} with value {.val ",
+        na_indices,
+        "}"
       ),
       rep("*", length(na_indices))
     )
@@ -275,11 +287,11 @@ check_wl <- function(
 #'
 #' @noRd
 check_column_exists <- function(
-    index,
-    df,
-    index_name = rlang::caller_arg(index),
-    df_name = rlang::caller_arg(df),
-    .call = rlang::caller_env()
+  index,
+  df,
+  index_name = rlang::caller_arg(index),
+  df_name = rlang::caller_arg(df),
+  .call = rlang::caller_env()
 ) {
   stopifnot(is.data.frame(df))
   stopifnot(is.numeric(index) || is.character(index) || is.logical(index))
@@ -316,7 +328,11 @@ check_column_exists <- function(
     val <- paste0(index, collapse = ", ")
 
     provided_msg <- paste0(
-      "Index {.var ", index_name, "} with value {.val ", val, "}"
+      "Index {.var ",
+      index_name,
+      "} with value {.val ",
+      val,
+      "}"
     )
 
     cli::cli_abort(

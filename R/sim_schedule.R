@@ -22,15 +22,17 @@ sim_schedule <- function(
     start_date <- Sys.Date()
   }
 
-  offsets<-floor(seq(0, n_rows + 1 , 1 / daily_capacity))
-  offsets<-offsets[-length(offsets)]
+  offsets <- floor(seq(0, n_rows + 1, 1 / daily_capacity))
+  offsets <- offsets[-length(offsets)]
 
   schedule <- data.frame(
     scheduled_date = as.Date(
       as.numeric(start_date) +
         offsets,
       origin = "1970-01-01"
-    ), scheduled_index = offsets)
+    ),
+    scheduled_index = offsets
+  )
 
   return(schedule)
 }
