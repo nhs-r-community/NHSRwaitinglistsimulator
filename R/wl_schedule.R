@@ -68,7 +68,7 @@ wl_schedule <- function(
   # schedule
   if (!unscheduled) {
     i <- 1
-    removals <- as.Date(character(nrow(wl)))
+    removals <- rep(as.Date(NA), nrow(wl))
     for (op in schedule[, 1]) {
       if (i > nrow(wl)) {
         break
